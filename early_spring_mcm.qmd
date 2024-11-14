@@ -12,28 +12,31 @@ spring_start_date <- spring_start_date%>%
   clean_names()%>%
   na.omit()
 
-# Perform an inner join with the correct syntax
+#ensure date column is in Date format 
+spring_start_date <- spring_start_date %>%
+  mutate(date = as.Date(date))
+
+#join datasets
 joined_spring_coords <- inner_join(spring_start_date, city_coordinates, by = c("lat", "long"))
 
 #filter city to montgomery county
 moco_spring_coords <- joined_spring_coords %>%
   filter(lat == 38.9907, long == 77.0261)
 
-#determine average spring arrival date in past 50 years
-sorted_spring_coords <- moco_spring_coords %>%
-  arrange(date)
+# Extract the baseline date for 1981 (or another year of your choice)
+baseline_year <- 1981
+baseline_date <- joined_spring_coords %>%
+  filter(format(date, "%Y") == baseline_year) %>%
+  select(date) %>%
+  pull()
 
-#extract most recent data point (last row)
-most_recent <- tail(sorted_spring_coords, 1)
+#calculate difference in days between each year's spring start date and the baseline (1981)
+joined_spring_coords <- joined_spring_coords %>%
+  mutate(year = format(date, "%Y"),
+         days_difference = as.numeric(difftime(date, baseline_date, units = "days")))
 
-#extract earliest data point (first row)
-earliest <- head(sorted_spring_coords, 1)
+#calculate average number of days earlier or later (relative to 1981)
+average_days_difference <- mean(joined_spring_coords$days_difference, na.rm = TRUE)
 
-#compare most recent and earliest data points
-comparison <- list(
-  most_recent = most_recent,
-  earliest = earliest
-)
+average_days_difference
 
-#view comparison
-comparison
