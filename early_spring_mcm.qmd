@@ -1,0 +1,39 @@
+#load libraries
+library(tidyverse)
+library(janitor)
+
+#upload data
+spring_start_date <- read_csv("trends_phenology.csv")
+city_coordinates <- read_csv("us_coords.csv")%>%
+  clean_names()
+
+#clean data
+spring_start_date <- spring_start_date%>%
+  clean_names()%>%
+  na.omit()
+
+# Perform an inner join with the correct syntax
+joined_spring_coords <- inner_join(spring_start_date, city_coordinates, by = c("lat", "long"))
+
+#filter city to montgomery county
+moco_spring_coords <- joined_spring_coords %>%
+  filter(lat == 38.9907, long == 77.0261)
+
+#determine average spring arrival date in past 50 years
+sorted_spring_coords <- moco_spring_coords %>%
+  arrange(date)
+
+#extract most recent data point (last row)
+most_recent <- tail(sorted_spring_coords, 1)
+
+#extract earliest data point (first row)
+earliest <- head(sorted_spring_coords, 1)
+
+#compare most recent and earliest data points
+comparison <- list(
+  most_recent = most_recent,
+  earliest = earliest
+)
+
+#view comparison
+comparison
